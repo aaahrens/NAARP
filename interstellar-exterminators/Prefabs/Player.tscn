@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://mjloylqnkwc5"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4ynan"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Player" type="CharacterBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_4ynan")
+
+[node name="Camera Pivot" type="Node3D" parent="Player"]
+
+[node name="Camera3D" type="Camera3D" parent="Player/Camera Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.53297406, -0.4989436)
