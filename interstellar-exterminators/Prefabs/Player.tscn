@@ -1,10 +1,18 @@
-[gd_scene load_steps=2 format=3 uid="uid://mjloylqnkwc5"]
+[gd_scene load_steps=5 format=3 uid="uid://mjloylqnkwc5"]
+
+[ext_resource type="Script" uid="uid://bht5nursgis2" path="res://Prefabs/PlayerMovement.cs" id="1_um8lo"]
+[ext_resource type="Script" uid="uid://bpmlsg4lww4px" path="res://Prefabs/MouseLook.cs" id="1_x3d5u"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_x3d5u"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4ynan"]
 
 [node name="Node3D" type="Node3D"]
 
 [node name="Player" type="CharacterBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("CapsuleMesh_x3d5u")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 shape = SubResource("CapsuleShape3D_4ynan")
@@ -13,3 +21,13 @@ shape = SubResource("CapsuleShape3D_4ynan")
 
 [node name="Camera3D" type="Camera3D" parent="Player/Camera Pivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.53297406, -0.4989436)
+
+[node name="MouseLook" type="Node" parent="Player/Camera Pivot" node_paths=PackedStringArray("YawTarget", "PitchTarget")]
+script = ExtResource("1_x3d5u")
+YawTarget = NodePath("../..")
+PitchTarget = NodePath("..")
+
+[node name="PlayerMovement" type="Node" parent="Player" node_paths=PackedStringArray("Body", "DirectionBasis")]
+script = ExtResource("1_um8lo")
+Body = NodePath("..")
+DirectionBasis = NodePath("..")

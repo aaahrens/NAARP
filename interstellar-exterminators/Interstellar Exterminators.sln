@@ -1,0 +1,19 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interstellar Exterminators", "Interstellar Exterminators.csproj", "{91854609-564A-4B22-BCC1-6E960AB9E1EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	Debug|Any CPU = Debug|Any CPU
+	ExportDebug|Any CPU = ExportDebug|Any CPU
+	ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{91854609-564A-4B22-BCC1-6E960AB9E1EE}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+EndGlobal
