@@ -2,30 +2,45 @@ using Godot;
 
 public partial class PlayerMovement : Node
 {
-	[Export] public CharacterBody3D Body;
+	/// <summary>
+	/// The characters body we actually want to move.
+	/// </summary>
+	[Export]
+    [ExportGroup("Movement Control")]
+    public CharacterBody3D Body;
 
 	/// <summary>
 	/// The axis we're moving on.
 	/// </summary>
-	[Export] 
-	public Node3D DirectionBasis;
+	[Export]
+    [ExportGroup("Movement Control")]
+    public Node3D DirectionBasis;
 
 	/// <summary>
 	/// The players movement speed in meters per second.
 	/// </summary>
 	[Export (PropertyHint.Range, "0,20,0.1")]
-	public float MoveSpeed = 5.0f;
+    [ExportGroup("Movement Control")]
+    public float MoveSpeed = 5.0f;
 
 	/// <summary>
 	/// The players initial jump speed in meters per second.
 	/// </summary>
 	[Export(PropertyHint.Range, "0,20,0.1")]
-	public float JumpVelocity = 5.0f;
+    [ExportGroup("Movement Control")]
+    public float JumpVelocity = 5.0f;
 
-	/// <summary>
-	/// Gravities acceleration in meters per second.
-	/// </summary>
-	private float gravity = 9.8f;
+    /// <summary>
+    /// The object that holds network ownership over this script.
+    /// </summary>
+    [Export]
+	[ExportGroup("Networking")]
+    public Node NetworkIdentity;
+
+    /// <summary>
+    /// Gravities acceleration in meters per second.
+    /// </summary>
+    private float gravity = 9.8f;
 
 	public override void _Ready()
 	{
@@ -47,6 +62,10 @@ public partial class PlayerMovement : Node
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (NetworkIdentity == null || !NetworkIdentity.IsMultiplayerAuthority())
+			return;
+
+
 		if (Body == null || DirectionBasis == null)
 			return;
 
