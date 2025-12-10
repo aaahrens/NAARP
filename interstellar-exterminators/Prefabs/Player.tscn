@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://mjloylqnkwc5"]
 
-[ext_resource type="Script" uid="uid://bht5nursgis2" path="res://Prefabs/PlayerMovement.cs" id="1_um8lo"]
-[ext_resource type="Script" uid="uid://bpmlsg4lww4px" path="res://Prefabs/MouseLook.cs" id="1_x3d5u"]
+[ext_resource type="Script" uid="uid://bht5nursgis2" path="res://Scripts/Player/PlayerMovement.cs" id="1_um8lo"]
+[ext_resource type="Script" uid="uid://bpmlsg4lww4px" path="res://Scripts/Player/MouseLook.cs" id="1_x3d5u"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_x3d5u"]
 
