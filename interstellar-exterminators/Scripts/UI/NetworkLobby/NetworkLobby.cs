@@ -6,12 +6,12 @@ using System.Collections.Generic;
 /// Manages lobby-specific state such as the list of players, 
 /// readiness, and whether the game can start.
 /// </summary>
-public class NetworkLobby
+public partial class NetworkLobby : Node
 {
     /// <summary>
     /// Snapshot of the current lobby state for this process.
     /// </summary>
-    public LobbyState State { get; private set; } = new LobbyState();
+    public LobbyState LobbyState { get; private set; } = new LobbyState();
 
     /// <summary>
     /// Event raised whenever the lobby state changes. Subscribers such as
@@ -57,11 +57,47 @@ public class NetworkLobby
     }
 
     /// <summary>
-    /// Sets the ready state for a given player and rebuilds the lobby state snapshot.
+    /// Sets the ready state for the local player. On the server this directly
+    /// updates the authoritative lobby data. On a client this is forwarded
+    /// to the server via RPC.
     /// </summary>
-    /// <param name="peerId">Unique peer identifier of the player being updated.</param>
+    /// <param name="ready">Whether the local player should be marked as ready.</param>
+    public void SetReady_Local(bool ready)
+    {
+        if (Multiplayer.IsServer())
+        {
+            int localPeerId = Multiplayer.GetUniqueId();
+            SetReady_Server(localPeerId, ready);
+        }
+        else
+        {
+            Rpc(nameof(RpcSetReady), ready);
+        }
+    }
+
+    /// <summary>
+    /// RPC endpoint invoked by clients to request that their ready state be updated.
+    /// </summary>
+    /// <param name="ready">Whether the requesting player should be marked as ready.</param>
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+    private void RpcSetReady(bool ready)
+    {
+        if (!Multiplayer.IsServer())
+        {
+            return;
+        }
+
+        int senderPeerId = Multiplayer.GetRemoteSenderId();
+        SetReady_Server(senderPeerId, ready);
+    }
+
+    /// <summary>
+    /// Applies a ready state change to the authoritative lobby data on the server
+    /// and rebuilds the lobby state snapshot.
+    /// </summary>
+    /// <param name="peerId">Peer ID of the player whose ready state is changing.</param>
     /// <param name="ready">New ready state for the player.</param>
-    public void SetReady(int peerId, bool ready)
+    private void SetReady_Server(int peerId, bool ready)
     {
         if (!playersByPeer.TryGetValue(peerId, out LobbyPlayer lobbyPlayer))
         {
@@ -73,46 +109,133 @@ public class NetworkLobby
     }
 
     /// <summary>
-    /// Updates local-player specific flags on the lobby state based on the provided local peer ID.
-    /// This should be called whenever the local peer changes or when the player list changes.
-    /// </summary>
-    /// <param name="localPeerId">Peer ID for the local player, or 0 if unknown.</param>
-    public void UpdateLocalFlags(int localPeerId)
-    {
-        bool localIsHost = false;
-        bool localIsReady = false;
-
-        if (localPeerId != 0 && playersByPeer.TryGetValue(localPeerId, out LobbyPlayer localPlayer))
-        {
-            localIsHost = localPlayer.IsHost;
-            localIsReady = localPlayer.IsReady;
-        }
-
-        State.LocalIsHost = localIsHost;
-        State.LocalIsReady = localIsReady;
-        State.CanStartGame = CanStartGame(State);
-
-        LobbyUpdated?.Invoke(State);
-    }
-
-    /// <summary>
-    /// Rebuilds the immutable LobbyState snapshot from the internal player dictionary
-    /// and recomputes derived flags such as whether the game can start.
+    /// Rebuilds the LobbyState snapshot from the authoritative lobby player dictionary
+    /// and notifies any listeners via the LobbyUpdated event.
+    /// This is called whenever player membership or ready state changes.
+    /// If running on the server, the updated snapshot is also broadcast to all clients
+    /// so their local lobby views stay in sync.
     /// </summary>
     private void RebuildState()
     {
+        // Build a new snapshot from the authoritative playersByPeer dictionary.
         var newState = new LobbyState();
 
-        foreach (var pair in playersByPeer)
+        foreach (KeyValuePair<int, LobbyPlayer> pair in playersByPeer)
         {
-            newState.Players.Add(pair.Value);
+            LobbyPlayer sourcePlayer = pair.Value;
+
+            // Create a shallow copy so UI code cannot mutate the authoritative objects.
+            var snapshotPlayer = new LobbyPlayer
+            {
+                PeerId = sourcePlayer.PeerId,
+                Name = sourcePlayer.Name,
+                IsReady = sourcePlayer.IsReady,
+                IsHost = sourcePlayer.IsHost
+            };
+
+            newState.Players.Add(snapshotPlayer);
         }
 
-        // LocalIsHost / LocalIsReady will be filled in by UpdateLocalFlags.
-        State = newState;
+        // Determine the local peer ID for this process, if any.
+        int localPeerId = Multiplayer.MultiplayerPeer != null
+            ? Multiplayer.GetUniqueId()
+            : 0;
 
-        // Note: We do not fire LobbyUpdated here because we are missing local flags.
-        // The owner (e.g. NetworkManager) should call UpdateLocalFlags() afterwards.
+        if (localPeerId != 0 && playersByPeer.TryGetValue(localPeerId, out LobbyPlayer localPlayer))
+        {
+            newState.LocalIsHost = localPlayer.IsHost;
+            newState.LocalIsReady = localPlayer.IsReady;
+        }
+        else
+        {
+            newState.LocalIsHost = false;
+            newState.LocalIsReady = false;
+        }
+
+        // Simple rule: can start game if there is at least one player and all players are ready.
+        newState.CanStartGame = CanStartGame(LobbyState);
+
+        // Replace the current snapshot and notify listeners on this process.
+        LobbyState = newState;
+        LobbyUpdated?.Invoke(LobbyState);
+
+        // If this instance is the server, also push the updated snapshot to all clients.
+        if (Multiplayer.IsServer())
+        {
+            BroadcastLobbyStateToClients();
+        }
+    }
+
+    /// <summary>
+    /// Constructs a serializable representation of the current lobby player dictionary
+    /// and sends it to all connected clients via RPC so they can rebuild their local state.
+    /// Only called on the server.
+    /// </summary>
+    private void BroadcastLobbyStateToClients()
+    {
+        var playersArray = new Godot.Collections.Array<Godot.Collections.Dictionary>();
+
+        foreach (KeyValuePair<int, LobbyPlayer> pair in playersByPeer)
+        {
+            LobbyPlayer player = pair.Value;
+
+            var playerDict = new Godot.Collections.Dictionary
+        {
+            { "PeerId", player.PeerId },
+            { "Name", player.Name },
+            { "IsReady", player.IsReady },
+            { "IsHost", player.IsHost }
+        };
+
+            playersArray.Add(playerDict);
+        }
+
+        // Send the snapshot to all peers; the server will also receive this,
+        // but the handler early-exits on the server side.
+        Rpc(nameof(RpcApplyLobbySnapshot), playersArray);
+    }
+
+    /// <summary>
+    /// RPC endpoint used by the server to deliver a lobby snapshot to clients.
+    /// Reconstructs the authoritative lobbyPlayersByPeer dictionary on the client
+    /// and then rebuilds the LobbyState snapshot locally.
+    /// </summary>
+    /// <param name="players">
+    /// Array of dictionaries representing each player in the lobby, including
+    /// peer ID, name, ready flag, and host status.
+    /// </param>
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+    private void RpcApplyLobbySnapshot(Godot.Collections.Array<Godot.Collections.Dictionary> players)
+    {
+        // The server already has the authoritative state; no need to apply the snapshot there.
+        if (Multiplayer.IsServer())
+        {
+            return;
+        }
+
+        playersByPeer.Clear();
+
+        foreach (Godot.Collections.Dictionary playerDict in players)
+        {
+            // Godot may box integer values as long when passing through Variant.
+            int peerId = (int)(long)playerDict["PeerId"];
+            string name = (string)playerDict["Name"];
+            bool isReady = (bool)playerDict["IsReady"];
+            bool isHost = (bool)playerDict["IsHost"];
+
+            var lobbyPlayer = new LobbyPlayer
+            {
+                PeerId = peerId,
+                Name = name,
+                IsReady = isReady,
+                IsHost = isHost
+            };
+
+            playersByPeer[peerId] = lobbyPlayer;
+        }
+
+        // Rebuild the local snapshot and notify any listeners (e.g. UI).
+        RebuildState();
     }
 
     /// <summary>
@@ -125,4 +248,65 @@ public class NetworkLobby
         return state.Players.Count > 0 &&
                state.Players.TrueForAll(p => p.IsReady);
     }
+
+    /// <summary>
+    /// Requests that the game start based on the current lobby state.
+    /// On a client, this sends an RPC to the server, and on the server
+    /// it validates and, if valid, transitions into the gameplay scene.
+    /// </summary>
+    public void RequestStartGame()
+    {
+        if (Multiplayer.IsServer())
+        {
+            TryStartGameOnServer();
+        }
+        else
+        {
+            Rpc(nameof(RpcRequestStartGame));
+        }
+    }
+
+    /// <summary>
+    /// RPC endpoint for clients to request that the server attempt to start the game.
+    /// Only the current host is allowed to trigger the start.
+    /// </summary>
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer)]
+    private void RpcRequestStartGame()
+    {
+        if (!Multiplayer.IsServer())
+        {
+            return;
+        }
+
+        int senderPeerId = Multiplayer.GetRemoteSenderId();
+
+        if (!playersByPeer.TryGetValue(senderPeerId, out LobbyPlayer lobbyPlayer) || !lobbyPlayer.IsHost)
+        {
+            GD.Print("LobbyManager: Non-host attempted to start the game; ignoring.");
+            return;
+        }
+
+        TryStartGameOnServer();
+    }
+
+    /// <summary>
+    /// Validates the current lobby state and, if all conditions are met,
+    /// transitions the session into the gameplay scene for all peers.
+    /// </summary>
+    private void TryStartGameOnServer()
+    {
+        if (!LobbyState.CanStartGame)
+        {
+            GD.Print("LobbyManager: Cannot start game; not all players are ready.");
+            return;
+        }
+
+        GD.Print("LobbyManager: Starting game...");
+
+        // TODO: Replace with your actual gameplay scene path.
+        string gameScenePath = "res://Scenes/Game.tscn";
+
+        GetTree().ChangeSceneToFile(gameScenePath);
+    }
+
 }

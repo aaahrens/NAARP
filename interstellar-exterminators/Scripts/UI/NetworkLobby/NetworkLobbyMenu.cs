@@ -70,7 +70,10 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     private PackedScene playerRowScene;
 
-    private NetworkManager networkManager;
+    /// <summary>
+    /// Cached reference to the autoloaded LobbyManager node.
+    /// </summary>
+    private NetworkLobby networkLobby;
 
     /// <summary>
     /// Called by Godot when the node is added to the scene tree.
@@ -91,15 +94,15 @@ public partial class NetworkLobbyMenu : Node
         startButton.Pressed += OnStartPressed;
         leaveButton.Pressed += OnLeavePressed;
 
-        networkManager = this.FindInEntireSceneTreeOfType<NetworkManager>();
-        if (networkManager == null)
+        networkLobby = this.FindInEntireSceneTreeOfType<NetworkLobby>();
+        if (networkLobby == null)
         {
-            GD.PushWarning("NetworkLobbyMenu: Could not find NetworkManager autoload; lobby UI will not update.");
+            GD.PushError("NetworkLobbyMenu: Could not find NetworkLobby; lobby UI will not update.");
             return;
         }
 
-        networkManager.NetworkLobby.LobbyUpdated += OnLobbyUpdated;
-        OnLobbyUpdated(networkManager.NetworkLobby.State);
+        networkLobby.LobbyUpdated += OnLobbyUpdated;
+        OnLobbyUpdated(networkLobby.LobbyState);
     }
 
     /// <summary>
@@ -172,15 +175,15 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     private void OnReadyPressed()
     {
-        if (networkManager == null)
+        if (networkLobby == null)
         {
             return;
         }
 
-        LobbyState lobbyState = networkManager.NetworkLobby.State;
+        LobbyState lobbyState = networkLobby.LobbyState;
         bool newReady = !lobbyState.LocalIsReady;
 
-        networkManager.NetworkLobby.SetReady(Multiplayer.GetUniqueId(), newReady);
+        networkLobby.SetReady_Local(newReady);
     }
 
     /// <summary>
@@ -189,12 +192,12 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     private void OnStartPressed()
     {
-        if (networkManager == null)
+        if (networkLobby == null)
         {
             return;
         }
 
-        networkManager.RequestStartGame();
+        networkLobby.RequestStartGame();
     }
 
     /// <summary>

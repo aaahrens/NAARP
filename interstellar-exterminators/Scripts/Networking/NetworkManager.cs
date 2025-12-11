@@ -19,7 +19,7 @@ public partial class NetworkManager : Node
     /// NetworkManager notifies this manager of connection events and 
     /// ready-state changes, and the LobbyManager issues updates for the UI.
     /// </summary>
-    public NetworkLobby NetworkLobby { get; private set; } = new NetworkLobby();
+    public NetworkLobby NetworkLobby { get; private set; }
 
     private ENetMultiplayerPeer peer;
     private readonly Dictionary<int, Node3D> playersByPeer = new();
@@ -37,6 +37,13 @@ public partial class NetworkManager : Node
         mp.ConnectedToServer += OnConnectedToServer;
         mp.ConnectionFailed += OnConnectionFailed;
         mp.ServerDisconnected += OnServerDisconnected;
+
+        NetworkLobby = this.FindChildOfType<NetworkLobby>();
+        if(NetworkLobby == null)
+        {
+            GD.PushError("NetworkManager: Could not find NetworkLobby in scene tree.");
+            return;
+        }
 
         GD.Print("NetworkManager ready.");
 
@@ -71,7 +78,6 @@ public partial class NetworkManager : Node
         // Host process is peer 1 by ENet convention
         SpawnPlayerForPeer(1);
         NetworkLobby.AddPlayer(1, isHost: true);
-        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
@@ -127,7 +133,6 @@ public partial class NetworkManager : Node
 
         SpawnPlayerForPeer((int)id);
         NetworkLobby.AddPlayer((int)id, isHost: false);
-        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
@@ -150,7 +155,6 @@ public partial class NetworkManager : Node
         }
 
         NetworkLobby.RemovePlayer((int)id);
-        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
