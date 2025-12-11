@@ -1,130 +1,14 @@
-[gd_scene load_steps=10 format=3 uid="uid://mjloylqnkwc5"]
+[gd_scene load_steps=9 format=3 uid="uid://mjloylqnkwc5"]
 
-[ext_resource type="Script" uid="uid://bpmlsg4lww4px" path="res://Scripts/Player/MouseLook.cs" id="1_x3d5u"]
 [ext_resource type="Script" uid="uid://bcgc6fjtitry4" path="res://Scripts/Player/MouseLookClient.cs" id="2_vxq8l"]
 [ext_resource type="Script" uid="uid://da574rfihsnkl" path="res://Scripts/Player/MouseLookServer.cs" id="3_gg3t4"]
 [ext_resource type="Script" uid="uid://cpgwt35rjewmv" path="res://Scripts/Player/PlayerMovementClient.cs" id="4_javds"]
 [ext_resource type="Script" uid="uid://3ofq72ejy7" path="res://Scripts/Player/PlayerMovementServer.cs" id="5_3ygst"]
+[ext_resource type="Script" uid="uid://nntsf5518wod" path="res://Scripts/Networking/NetworkAuthority.cs" id="6_gg3t4"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_x3d5u"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4ynan"]
-
-[sub_resource type="CSharpScript" id="CSharpScript_lhekp"]
-script/source = "using Godot;
-
-public partial class PlayerMovement : Node
-{
-	/// <summary>
-	/// The characters body we actually want to move.
-	/// </summary>
-	[Export]
-    [ExportGroup(\"Movement Control\")]
-    public CharacterBody3D Body;
-
-	/// <summary>
-	/// The axis we're moving on.
-	/// </summary>
-	[Export]
-    [ExportGroup(\"Movement Control\")]
-    public Node3D DirectionBasis;
-
-	/// <summary>
-	/// The players movement speed in meters per second.
-	/// </summary>
-	[Export (PropertyHint.Range, \"0,20,0.1\")]
-    [ExportGroup(\"Movement Control\")]
-    public float MoveSpeed = 5.0f;
-
-	/// <summary>
-	/// The players initial jump speed in meters per second.
-	/// </summary>
-	[Export(PropertyHint.Range, \"0,20,0.1\")]
-    [ExportGroup(\"Movement Control\")]
-    public float JumpVelocity = 5.0f;
-
-    /// <summary>
-    /// The object that holds network ownership over this script.
-    /// </summary>
-    [Export]
-	[ExportGroup(\"Networking\")]
-    public Node NetworkIdentity;
-
-    /// <summary>
-    /// Gravities acceleration in meters per second.
-    /// </summary>
-    private float gravity;
-
-	public override void _Ready()
-	{
-		if (Body == null)
-		{
-            Body = GetParent<CharacterBody3D>();
-            return;
-		}
-
-		if (DirectionBasis == null)
-		{
-			// Default to moving relative to the body if nothing is set.
-			DirectionBasis = Body;
-		}
-
-		if(NetworkIdentity == null)
-		{
-			NetworkIdentity = GetParent<NetworkIdentity>();
-		}
-
-		gravity = (float)ProjectSettings.GetSetting(\"physics/3d/default_gravity\");
-	}
-
-	public override void _PhysicsProcess(double delta)
-	{
-		if (NetworkIdentity == null || !NetworkIdentity.IsMultiplayerAuthority())
-			return;
-
-
-		if (Body == null || DirectionBasis == null)
-			return;
-
-		Vector3 velocity = Body.Velocity;
-
-		Basis basis = DirectionBasis.GlobalTransform.Basis;
-		Vector3 forward = -basis.Z;
-		Vector3 right = basis.X;
-
-		Vector3 direction = Vector3.Zero;
-
-		if (Input.IsActionPressed(\"move_forward\"))
-			direction += forward;
-		if (Input.IsActionPressed(\"move_backward\"))
-			direction -= forward;
-		if (Input.IsActionPressed(\"move_left\"))
-			direction -= right;
-		if (Input.IsActionPressed(\"move_right\"))
-			direction += right;
-
-		direction = direction.Normalized();
-
-		velocity.X = direction.X * MoveSpeed;
-		velocity.Z = direction.Z * MoveSpeed;
-
-		if (!Body.IsOnFloor())
-		{
-			velocity.Y -= gravity * (float)delta;
-		}
-		else
-		{
-			if (Input.IsActionJustPressed(\"jump\"))
-				velocity.Y = JumpVelocity;
-			else
-				velocity.Y = 0f;
-		}
-
-		Body.Velocity = velocity;
-		Body.MoveAndSlide();
-	}
-}
-"
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_t8lmw"]
 
@@ -143,11 +27,7 @@ shape = SubResource("CapsuleShape3D_4ynan")
 [node name="Camera3D" type="Camera3D" parent="Player/Camera Pivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.53297406, -0.4989436)
 
-[node name="MouseLook" type="Node" parent="Player/Camera Pivot" node_paths=PackedStringArray("YawTarget", "PitchTarget", "NetworkIdentity")]
-script = ExtResource("1_x3d5u")
-YawTarget = NodePath("../..")
-PitchTarget = NodePath("..")
-NetworkIdentity = NodePath("../../..")
+[node name="MouseLook" type="Node" parent="Player/Camera Pivot"]
 
 [node name="MouseLookClient" type="Node" parent="Player/Camera Pivot/MouseLook" node_paths=PackedStringArray("YawTarget", "PitchTarget")]
 script = ExtResource("2_vxq8l")
@@ -158,19 +38,19 @@ PitchTarget = NodePath("../..")
 script = ExtResource("3_gg3t4")
 YawTarget = NodePath("../../..")
 
-[node name="PlayerMovement" type="Node" parent="Player" node_paths=PackedStringArray("Body", "DirectionBasis", "NetworkIdentity")]
-script = SubResource("CSharpScript_lhekp")
-Body = NodePath("..")
-DirectionBasis = NodePath("..")
-MoveSpeed = null
-JumpVelocity = null
-NetworkIdentity = NodePath("../..")
+[node name="PlayerMovement" type="Node" parent="Player"]
 
 [node name="PlayerMovementClient" type="Node" parent="Player/PlayerMovement"]
 script = ExtResource("4_javds")
 
-[node name="PlayerMovementServer" type="Node" parent="Player/PlayerMovement"]
+[node name="PlayerMovementServer" type="Node" parent="Player/PlayerMovement" node_paths=PackedStringArray("Body", "DirectionBasis")]
 script = ExtResource("5_3ygst")
+Body = NodePath("../..")
+DirectionBasis = NodePath("../..")
+
+[node name="NetworkAuthority" type="Node" parent="Player" node_paths=PackedStringArray("ClientAuthorityNodes")]
+script = ExtResource("6_gg3t4")
+ClientAuthorityNodes = [NodePath("../PlayerMovement/PlayerMovementClient"), NodePath("../Camera Pivot/MouseLook/MouseLookClient")]
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_t8lmw")

@@ -36,7 +36,19 @@ public partial class PlayerMovementServer : Node
     /// </summary>
     private float gravity;
 
+    /// <summary>
+    /// Reference to our network authority component.
+    /// </summary>
+    private NetworkAuthority networkAuthority;
+
+    /// <summary>
+    /// The direction our input has requested we move.
+    /// </summary>
     private Vector3 requestedDirection = Vector3.Zero;
+
+    /// <summary>
+    /// Has a jump been requested.
+    /// </summary>
     private bool requestedJump = false;
 
     public override void _Ready()
@@ -44,10 +56,12 @@ public partial class PlayerMovementServer : Node
         AddToGroup("PlayerMovementServer");
 
         if (Body == null)
-            Body = GetParent<CharacterBody3D>();
+            Body = this.FindParentOfType<CharacterBody3D>();
 
         if (DirectionBasis == null)
             DirectionBasis = Body;
+
+        networkAuthority = this.FindInSceneTreeOfType<NetworkAuthority>();
 
         gravity = (float)ProjectSettings.GetSetting("physics/3d/default_gravity");
     }
@@ -58,12 +72,26 @@ public partial class PlayerMovementServer : Node
     /// <param name="direction">Requested movement direction.</param>
     /// <param name="jump">Requested jump action.</param>
     /// <param name="senderAuthority">Sender's network authority ID.</param>
-    [Rpc(MultiplayerApi.RpcMode.Authority)]
-    public void RequestMove(Vector3 direction, bool jump, int senderAuthority)
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]
+    public void RequestMove(Vector3 direction, bool jump)
     {
-        // Validate sender authority
-        if (Multiplayer.GetRemoteSenderId() != senderAuthority)
+        // Only the server should ever apply movement.
+        if (!Multiplayer.IsServer())
             return;
+
+        //If we don't have a valid authority component with a valid PeerId, we can't validate anything.
+        if (networkAuthority == null || networkAuthority.PeerId == 0)
+            return;
+
+        // Who actually sent this RPC?
+        int sender = Multiplayer.GetRemoteSenderId();
+        if (sender != networkAuthority.PeerId)
+        {
+            GD.PushWarning(
+                $"PlayerMovementServer: Rejected move from peer {sender}, owner is {networkAuthority.PeerId}."
+            );
+            return;
+        }
 
         requestedDirection = direction;
         requestedJump = jump;
@@ -76,8 +104,12 @@ public partial class PlayerMovementServer : Node
 
         Vector3 velocity = Body.Velocity;
 
-        velocity.X = requestedDirection.X * MoveSpeed;
-        velocity.Z = requestedDirection.Z * MoveSpeed;
+        // Convert requested direction from local to world space
+        Vector3 moveWorld = DirectionBasis.GlobalTransform.Basis * requestedDirection;
+        moveWorld.Y = 0;
+
+        velocity.X = moveWorld.X * MoveSpeed;
+        velocity.Z = moveWorld.Z * MoveSpeed;
 
         if (!Body.IsOnFloor())
         {

@@ -33,7 +33,7 @@ public partial class MouseLookClient : Node
 
     public override void _Ready()
     {
-        server = GetTree().GetFirstNodeInGroup("MouseLookServer") as MouseLookServer;
+        server = this.FindInSceneTreeOfType<MouseLookServer>();
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 

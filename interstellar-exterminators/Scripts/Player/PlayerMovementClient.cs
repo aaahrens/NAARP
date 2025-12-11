@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 /// <summary>
 /// Handles local input and sends movement requests to the server.
@@ -9,16 +8,16 @@ public partial class PlayerMovementClient : Node
     /// <summary>
     /// Reference to the server-side movement node.
     /// </summary>
-    private PlayerMovementServer server;
+    private PlayerMovementServer playerMovementServer;
 
     public override void _Ready()
     {
-        server = GetTree().GetFirstNodeInGroup("PlayerMovementServer") as PlayerMovementServer;
+        playerMovementServer = this.FindInSceneTreeOfType<PlayerMovementServer>();
     }
 
     public override void _Process(double delta)
 	{
-        if (server == null)
+        if (playerMovementServer == null)
             return;
 
         // Only allow the local authority to send movement requests
@@ -29,18 +28,20 @@ public partial class PlayerMovementClient : Node
         Vector3 direction = Vector3.Zero;
 
         if (Input.IsActionPressed("move_forward"))
-            direction += -server.DirectionBasis.GlobalTransform.Basis.Z;
+            direction += Vector3.Forward;
         if (Input.IsActionPressed("move_backward"))
-            direction -= -server.DirectionBasis.GlobalTransform.Basis.Z;
+            direction += Vector3.Back;
         if (Input.IsActionPressed("move_left"))
-            direction -= server.DirectionBasis.GlobalTransform.Basis.X;
+            direction += Vector3.Left;
         if (Input.IsActionPressed("move_right"))
-            direction += server.DirectionBasis.GlobalTransform.Basis.X;
+            direction += Vector3.Right;
 
         direction = direction.Normalized();
         bool jump = Input.IsActionJustPressed("jump");
 
-        // Send movement request to server via RPC
-        server.RpcId(server.GetMultiplayerAuthority(), "RequestMove", direction, jump, Multiplayer.GetUniqueId());
+        if(direction != Vector3.Zero || jump)
+        {
+            playerMovementServer.RpcId(playerMovementServer.GetMultiplayerAuthority(), "RequestMove", direction, jump);
+        }
     }
 }

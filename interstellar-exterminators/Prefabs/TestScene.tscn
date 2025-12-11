@@ -1,6 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://b1t2dvin5r0ks"]
-
-[ext_resource type="PackedScene" uid="uid://mjloylqnkwc5" path="res://Prefabs/Player.tscn" id="1_acep8"]
+[gd_scene load_steps=3 format=3 uid="uid://b1t2dvin5r0ks"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_a4e0w"]
 size = Vector2(20, 20)
@@ -18,6 +16,3 @@ skeleton = NodePath("../..")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
 shape = SubResource("BoxShape3D_a4e0w")
-
-[node name="Node3D" parent="." instance=ExtResource("1_acep8")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4628727, 0)

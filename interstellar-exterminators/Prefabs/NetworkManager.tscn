@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://bn8bxbdk38hym"]
+
+[ext_resource type="Script" uid="uid://cqk6fs1vao2wi" path="res://Scripts/Networking/NetworkManager.cs" id="1_8hh2l"]
+[ext_resource type="PackedScene" uid="uid://mjloylqnkwc5" path="res://Prefabs/Player.tscn" id="2_km2en"]
+
+[node name="NetworkManager" type="Node"]
+script = ExtResource("1_8hh2l")
+PlayerScene = ExtResource("2_km2en")
