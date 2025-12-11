@@ -26,11 +26,70 @@ public partial class NetworkLobby : Node
     private readonly Dictionary<int, LobbyPlayer> playersByPeer = new();
 
     /// <summary>
+    /// Tracks whether the host player has been added to the lobby.
+    /// </summary>
+    private bool hostAdded = false;
+
+    public override void _Ready()
+    {
+        // Listen to peer events directly; this keeps NetworkManager decoupled.
+        Multiplayer.PeerConnected += OnPeerConnected;
+        Multiplayer.PeerDisconnected += OnPeerDisconnected;
+    }
+
+    public override void _Process(double delta)
+    {
+        // On the server we need to add the host to the lobby once the multiplayer peer is ready.
+        if (!hostAdded && Multiplayer.IsServer() && Multiplayer.MultiplayerPeer != null)
+        {
+            int hostPeerId = Multiplayer.GetUniqueId();
+            AddPlayer(hostPeerId, isHost: true);
+            hostAdded = true;
+        }
+    }
+
+    /// <summary>
+    /// Handles notification that a new peer has joined.
+    /// Only the server mutates the authoritative player list;
+    /// clients will receive snapshots via RPC.
+    /// </summary>
+    /// <param name="id">Peer ID of the connected client.</param>
+    private void OnPeerConnected(long id)
+    {
+        if (!Multiplayer.IsServer())
+        {
+            return;
+        }
+
+        int peerId = (int)id;
+
+        bool isHost = false;
+        AddPlayer(peerId, isHost);
+    }
+
+    /// <summary>
+    /// Handles notification that a peer has disconnected.
+    /// Only the server mutates the authoritative player list;
+    /// clients will receive snapshots via RPC.
+    /// </summary>
+    /// <param name="id">Peer ID of the disconnected client.</param>
+    private void OnPeerDisconnected(long id)
+    {
+        if (!Multiplayer.IsServer())
+        {
+            return;
+        }
+
+        int peerId = (int)id;
+        RemovePlayer(peerId);
+    }
+
+    /// <summary>
     /// Adds a new player to the lobby and rebuilds the lobby state snapshot.
     /// </summary>
     /// <param name="peerId">Unique peer identifier for the new player.</param>
     /// <param name="isHost">Indicates whether this player is the lobby host.</param>
-    public void AddPlayer(int peerId, bool isHost)
+    private void AddPlayer(int peerId, bool isHost)
     {
         var lobbyPlayer = new LobbyPlayer
         {
@@ -48,7 +107,7 @@ public partial class NetworkLobby : Node
     /// Removes a player from the lobby and rebuilds the lobby state snapshot.
     /// </summary>
     /// <param name="peerId">Unique peer identifier of the player leaving the lobby.</param>
-    public void RemovePlayer(int peerId)
+    private void RemovePlayer(int peerId)
     {
         if (playersByPeer.Remove(peerId))
         {
@@ -152,8 +211,7 @@ public partial class NetworkLobby : Node
             newState.LocalIsReady = false;
         }
 
-        // Simple rule: can start game if there is at least one player and all players are ready.
-        newState.CanStartGame = CanStartGame(LobbyState);
+        newState.CanStartGame = CanStartGame(newState);
 
         // Replace the current snapshot and notify listeners on this process.
         LobbyState = newState;
@@ -282,7 +340,7 @@ public partial class NetworkLobby : Node
 
         if (!playersByPeer.TryGetValue(senderPeerId, out LobbyPlayer lobbyPlayer) || !lobbyPlayer.IsHost)
         {
-            GD.Print("LobbyManager: Non-host attempted to start the game; ignoring.");
+            GD.Print("NetworkLobby: Non-host attempted to start the game; ignoring.");
             return;
         }
 
@@ -297,11 +355,11 @@ public partial class NetworkLobby : Node
     {
         if (!LobbyState.CanStartGame)
         {
-            GD.Print("LobbyManager: Cannot start game; not all players are ready.");
+            GD.Print("NetworkLobby: Cannot start game; not all players are ready.");
             return;
         }
 
-        GD.Print("LobbyManager: Starting game...");
+        GD.Print("NetworkLobby: Starting game...");
 
         // TODO: Replace with your actual gameplay scene path.
         string gameScenePath = "res://Scenes/Game.tscn";
