@@ -72,4 +72,34 @@ public static class NodeExtensions
         // Now search only within this instance's subtree.
         return instanceRoot.FindChildOfType<T>();
     }
+
+    /// <summary>
+    /// Searches the entire SceneTree for the first node whose type matches
+    /// <typeparamref name="T"/>.
+    /// Returns null if no matching node is found.
+    /// </summary>
+    /// <typeparam name="T">The type of node to search for.</typeparam>
+    /// <param name="node">Any node that is part of the active SceneTree.</param>
+    /// <returns>
+    /// The first node of type <typeparamref name="T"/> in the SceneTree,
+    /// or null if no matching node exists.
+    /// </returns>
+    public static T FindInEntireSceneTreeOfType<T>(this Node node) where T : class
+    {
+        var tree = node.GetTree();
+        if (tree == null)
+            return null;
+
+        // Root is the viewport root and will contain both autoloads and the current scene.
+        var root = tree.Root;
+        if (root == null)
+            return null;
+
+        // If the root itself matches, return it immediately.
+        if (root is T rootMatch)
+            return rootMatch;
+
+        // Otherwise, reuse the existing recursive child search starting at the root.
+        return root.FindChildOfType<T>();
+    }
 }

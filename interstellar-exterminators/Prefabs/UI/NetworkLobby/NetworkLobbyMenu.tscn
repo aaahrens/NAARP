@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3 uid="uid://xbpemadmmbax"]
+
+[ext_resource type="Script" uid="uid://cxddygiw3qlif" path="res://Scripts/UI/NetworkLobby/NetworkLobbyMenu.cs" id="1_khvep"]
+
+[node name="NetworkLobbyMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_khvep")
+PlayerRowsContainerPath = NodePath("MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox/PlayersScroll/PlayerListVBox")
+RoleLabelPath = NodePath("MarginContainer/NetworkLobby_MainVBox/TopBar/RoleLabel")
+ReadyButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/ReadyButton")
+StartButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/StartButton")
+LeaveButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/LeaveButton")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="NetworkLobby_MainVBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/NetworkLobby_MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 500
+
+[node name="LobbyTitleLabel" type="Label" parent="MarginContainer/NetworkLobby_MainVBox/TopBar"]
+layout_mode = 2
+text = "Lobby"
+
+[node name="RoleLabel" type="Label" parent="MarginContainer/NetworkLobby_MainVBox/TopBar"]
+layout_mode = 2
+text = "You are..."
+
+[node name="MiddleRow" type="HBoxContainer" parent="MarginContainer/NetworkLobby_MainVBox"]
+layout_mode = 2
+
+[node name="PlayerPanel" type="PanelContainer" parent="MarginContainer/NetworkLobby_MainVBox/MiddleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerVBox" type="VBoxContainer" parent="MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel"]
+layout_mode = 2
+
+[node name="PlayersTitleLabel" type="Label" parent="MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox"]
+layout_mode = 2
+text = "Players
+"
+
+[node name="PlayersScroll" type="ScrollContainer" parent="MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox"]
+layout_mode = 2
+
+[node name="PlayerListVBox" type="VBoxContainer" parent="MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox/PlayersScroll"]
+layout_mode = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="MarginContainer/NetworkLobby_MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="LeaveButton" type="Button" parent="MarginContainer/NetworkLobby_MainVBox/BottomBar"]
+layout_mode = 2
+text = "Leave
+"
+
+[node name="ReadyButton" type="Button" parent="MarginContainer/NetworkLobby_MainVBox/BottomBar"]
+layout_mode = 2
+text = "Ready
+"
+
+[node name="StartButton" type="Button" parent="MarginContainer/NetworkLobby_MainVBox/BottomBar"]
+layout_mode = 2
+text = "Start
+"

@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 /// <summary>
@@ -13,8 +14,15 @@ public partial class NetworkManager : Node
     [Export]
     public PackedScene PlayerScene;
 
-    private ENetMultiplayerPeer _peer;
-    private readonly Dictionary<int, Node3D> _playersByPeer = new();
+    /// <summary>
+    /// High-level manager responsible for maintaining lobby state.
+    /// NetworkManager notifies this manager of connection events and 
+    /// ready-state changes, and the LobbyManager issues updates for the UI.
+    /// </summary>
+    public NetworkLobby NetworkLobby { get; private set; } = new NetworkLobby();
+
+    private ENetMultiplayerPeer peer;
+    private readonly Dictionary<int, Node3D> playersByPeer = new();
 
     /// <summary>
     /// Initializes multiplayer signal bindings and prepares the manager
@@ -48,8 +56,8 @@ public partial class NetworkManager : Node
     {
         GD.Print("Starting host...");
 
-        _peer = new ENetMultiplayerPeer();
-        var error = _peer.CreateServer(port, maxClients);
+        peer = new ENetMultiplayerPeer();
+        var error = peer.CreateServer(port, maxClients);
 
         if (error != Error.Ok)
         {
@@ -57,11 +65,13 @@ public partial class NetworkManager : Node
             return;
         }
 
-        Multiplayer.MultiplayerPeer = _peer;
+        Multiplayer.MultiplayerPeer = peer;
         GD.Print($"Host started on port {port}");
 
         // Host process is peer 1 by ENet convention
         SpawnPlayerForPeer(1);
+        NetworkLobby.AddPlayer(1, isHost: true);
+        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
@@ -72,8 +82,8 @@ public partial class NetworkManager : Node
     {
         GD.Print("Starting dedicated server...");
 
-        _peer = new ENetMultiplayerPeer();
-        var error = _peer.CreateServer(port, maxClients);
+        peer = new ENetMultiplayerPeer();
+        var error = peer.CreateServer(port, maxClients);
 
         if (error != Error.Ok)
         {
@@ -81,7 +91,7 @@ public partial class NetworkManager : Node
             return;
         }
 
-        Multiplayer.MultiplayerPeer = _peer;
+        Multiplayer.MultiplayerPeer = peer;
         GD.Print($"Dedicated server started on port {port}");
     }
 
@@ -92,8 +102,8 @@ public partial class NetworkManager : Node
     {
         GD.Print($"Connecting to {address}:{port}...");
 
-        _peer = new ENetMultiplayerPeer();
-        var error = _peer.CreateClient(address, port);
+        peer = new ENetMultiplayerPeer();
+        var error = peer.CreateClient(address, port);
 
         if (error != Error.Ok)
         {
@@ -101,7 +111,7 @@ public partial class NetworkManager : Node
             return;
         }
 
-        Multiplayer.MultiplayerPeer = _peer;
+        Multiplayer.MultiplayerPeer = peer;
     }
 
     /// <summary>
@@ -116,6 +126,8 @@ public partial class NetworkManager : Node
             return;
 
         SpawnPlayerForPeer((int)id);
+        NetworkLobby.AddPlayer((int)id, isHost: false);
+        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
@@ -131,11 +143,14 @@ public partial class NetworkManager : Node
 
         int peerId = (int)id;
 
-        if (_playersByPeer.TryGetValue(peerId, out var player))
+        if (playersByPeer.TryGetValue(peerId, out var player))
         {
             player.QueueFree();
-            _playersByPeer.Remove(peerId);
+            playersByPeer.Remove(peerId);
         }
+
+        NetworkLobby.RemovePlayer((int)id);
+        NetworkLobby.UpdateLocalFlags(Multiplayer.GetUniqueId());
     }
 
     /// <summary>
@@ -181,7 +196,7 @@ public partial class NetworkManager : Node
         var player = PlayerScene.Instantiate<Node3D>();
 
         GetTree().CurrentScene.AddChild(player);
-        _playersByPeer[peerId] = player;
+        playersByPeer[peerId] = player;
 
         var authoritySetup = player.FindChildOfType<NetworkAuthority>();
 
