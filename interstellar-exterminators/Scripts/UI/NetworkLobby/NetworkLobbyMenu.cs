@@ -39,10 +39,16 @@ public partial class NetworkLobbyMenu : Node
     private Button leaveButton;
 
     /// <summary>
-    /// PackedScene used to instantiate new PlayerRow controls for the player list.
+    /// Control used to create each individual player row in the lobby UI.
     /// </summary>
     [Export]
     private PackedScene playerRowScene;
+
+    /// <summary>
+    /// The main menu scene.
+    /// </summary>
+    [Export]
+    private PackedScene mainMenuScene;
 
     /// <summary>
     /// Cached reference to the autoloaded LobbyManager node.
@@ -174,8 +180,26 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     private void OnLeavePressed()
     {
-        //TODO: Implement leaving the lobby properly
-        // We need to create main scene to bail out to.
-        //GetTree().ChangeSceneToFile("res://UI/MainMenu.tscn");
+        if (mainMenuScene == null)
+        {
+            GD.PushError("NetworkLobbyMenu: mainMenuScenePath is not set; cannot leave lobby.");
+            return;
+        }
+
+        // If we're the sever shut down everyones clients.
+        if (Multiplayer.IsServer())
+        {
+            Multiplayer.MultiplayerPeer?.Close();
+            Multiplayer.MultiplayerPeer = null;
+
+            GetTree().ChangeSceneToPacked(mainMenuScene);
+            return;
+        }
+
+        // If we're a client, just disconnect and return to main menu.
+        Multiplayer.MultiplayerPeer?.Close();
+        Multiplayer.MultiplayerPeer = null;
+
+        GetTree().ChangeSceneToPacked(mainMenuScene);
     }
 }
