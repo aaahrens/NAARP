@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://xbpemadmmbax"]
+[gd_scene load_steps=5 format=3 uid="uid://xbpemadmmbax"]
 
 [ext_resource type="Script" uid="uid://cxddygiw3qlif" path="res://Scripts/UI/NetworkLobby/NetworkLobbyMenu.cs" id="1_khvep"]
 [ext_resource type="PackedScene" uid="uid://nowa2ypvnsgm" path="res://Prefabs/UI/NetworkLobby/PlayerRow.tscn" id="2_mawrb"]
+[ext_resource type="PackedScene" uid="uid://ck3tqu76wb0um" path="res://Prefabs/UI/Main Menu/MainMenu.tscn" id="3_0wpoh"]
+[ext_resource type="Script" uid="uid://14hhfkflofrc" path="res://Scripts/UI/NetworkLobby/NetworkLobby.cs" id="4_ku8al"]
 
 [node name="NetworkLobbyMenu" type="Control" node_paths=PackedStringArray("playerRowsContainer", "roleLabel", "readyButton", "startButton", "leaveButton")]
 layout_mode = 3
@@ -17,6 +19,7 @@ readyButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/ReadyBut
 startButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/StartButton")
 leaveButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/LeaveButton")
 playerRowScene = ExtResource("2_mawrb")
+mainMenuScene = ExtResource("3_0wpoh")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 0
@@ -82,3 +85,6 @@ text = "Ready
 layout_mode = 2
 text = "Start
 "
+
+[node name="NetworkLobby" type="Node" parent="."]
+script = ExtResource("4_ku8al")

@@ -62,8 +62,6 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     public override void _Ready()
     {
-        playerRowScene = GD.Load<PackedScene>("res://UI/PlayerRow.tscn");
-
         readyButton.Pressed += OnReadyPressed;
         startButton.Pressed += OnStartPressed;
         leaveButton.Pressed += OnLeavePressed;
@@ -72,6 +70,12 @@ public partial class NetworkLobbyMenu : Node
         if (networkLobby == null)
         {
             GD.PushError("NetworkLobbyMenu: Could not find NetworkLobby; lobby UI will not update.");
+            return;
+        }
+
+        if (playerRowScene == null)
+        {
+            GD.PushError("NetworkLobbyMenu: playerRowScene is not assigned.");
             return;
         }
 
@@ -124,9 +128,17 @@ public partial class NetworkLobbyMenu : Node
         // Recreate from lobby players
         foreach (LobbyPlayer player in lobbyState.Players)
         {
-            PlayerRow rowInstance = playerRowScene.Instantiate<PlayerRow>();
-            rowInstance.SetData(player.PeerId, player.Name, player.IsReady, player.IsHost);
-            playerRowsContainer.AddChild(rowInstance);
+            Node rowNode = playerRowScene.Instantiate();
+            playerRowsContainer.AddChild(rowNode);
+
+            var row = rowNode as PlayerRow;
+            if (row == null)
+            {
+                GD.PushError($"NetworkLobbyMenu: Instantiated PlayerRow scene does not have a PlayerRow script on its root (got {rowNode.GetType().Name}).");
+                continue;
+            }
+
+            row.SetData(player.PeerId, player.Name, player.IsReady, player.IsHost);
         }
     }
 
@@ -182,7 +194,7 @@ public partial class NetworkLobbyMenu : Node
     {
         if (mainMenuScene == null)
         {
-            GD.PushError("NetworkLobbyMenu: mainMenuScenePath is not set; cannot leave lobby.");
+            GD.PushError("NetworkLobbyMenu: mainMenuScene is not set; cannot leave lobby.");
             return;
         }
 

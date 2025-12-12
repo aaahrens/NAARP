@@ -14,7 +14,7 @@ public partial class MainMenu : Control
     /// a host or client session. This can be overridden in the inspector.
     /// </summary>
     [Export]
-    public string LobbyScenePath { get; set; }
+    private string networkLobbyScenePath;
 
     /// <summary>
     /// Reference to the Button used to start a dedicated server.
@@ -62,6 +62,8 @@ public partial class MainMenu : Control
         hostButton.Pressed += OnHostPressed;
         connectButton.Pressed += OnConnectPressed;
 
+        Multiplayer.ConnectedToServer += OnClientConnectedToServer;
+
         // Provide reasonable defaults for quick testing.
         if (addressLineEdit != null && string.IsNullOrWhiteSpace(addressLineEdit.Text))
         {
@@ -100,7 +102,8 @@ public partial class MainMenu : Control
         networkManager.StartDedicatedServer(port);
 
         GD.Print($"MainMenu: Dedicated server started on port {port}.");
-        // For a dedicated server, we typically do not change scenes on this process.
+
+        ShowLobbyScene();
     }
 
     /// <summary>
@@ -119,10 +122,7 @@ public partial class MainMenu : Control
 
         GD.Print($"MainMenu: Host started on port {port}.");
 
-        if (!string.IsNullOrEmpty(LobbyScenePath))
-        {
-            GetTree().ChangeSceneToFile(LobbyScenePath);
-        }
+        ShowLobbyScene();
     }
 
     /// <summary>
@@ -143,11 +143,6 @@ public partial class MainMenu : Control
         networkManager.StartClient(address, port);
 
         GD.Print($"MainMenu: Connecting to {address}:{port}...");
-
-        if (!string.IsNullOrEmpty(LobbyScenePath))
-        {
-            GetTree().ChangeSceneToFile(LobbyScenePath);
-        }
     }
 
     /// <summary>
@@ -197,5 +192,39 @@ public partial class MainMenu : Control
         }
 
         return text.Trim();
+    }
+
+    public override void _ExitTree()
+    {
+        // Clean up the callback so we don't leak this menu instance.
+        Multiplayer.ConnectedToServer -= OnClientConnectedToServer;
+    }
+
+    private void OnClientConnectedToServer()
+    {
+        GD.Print("MainMenu: Client connected to server, loading lobby.");
+        ShowLobbyScene();
+    }
+
+    private void ShowLobbyScene()
+    {
+        if (String.IsNullOrEmpty(networkLobbyScenePath))
+        {
+            GD.PushError("MainMenu: lobbyScene is not assigned.");
+            return;
+        }
+
+        var tree = GetTree();
+        if (tree == null)
+        {
+            GD.PushError("MainMenu: SceneTree is null; cannot change scene.");
+            return;
+        }
+
+        var error = tree.ChangeSceneToFile(networkLobbyScenePath);
+        if (error != Error.Ok)
+        {
+            GD.PushError($"MainMenu: Failed to change scene to lobby: {error}");
+        }
     }
 }

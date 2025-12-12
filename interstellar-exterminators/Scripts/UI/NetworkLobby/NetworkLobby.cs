@@ -299,7 +299,7 @@ public partial class NetworkLobby : Node
     /// </summary>
     /// <param name="state">Lobby state snapshot to evaluate.</param>
     /// <returns>True if the game can start; otherwise false.</returns>
-    private bool CanStartGame(LobbyState state)
+    private static bool CanStartGame(LobbyState state)
     {
         return state.Players.Count > 0 &&
                state.Players.TrueForAll(p => p.IsReady);

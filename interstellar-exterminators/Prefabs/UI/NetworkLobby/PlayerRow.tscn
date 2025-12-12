@@ -1,7 +1,10 @@
-[gd_scene format=3 uid="uid://nowa2ypvnsgm"]
+[gd_scene load_steps=2 format=3 uid="uid://nowa2ypvnsgm"]
+
+[ext_resource type="Script" uid="uid://mlrhss51okxq" path="res://Scripts/UI/NetworkLobby/PlayerRow.cs" id="1_bbgr0"]
 
 [node name="PlayerRow" type="HBoxContainer"]
 size_flags_horizontal = 3
+script = ExtResource("1_bbgr0")
 
 [node name="NameLabel" type="Label" parent="."]
 layout_mode = 2

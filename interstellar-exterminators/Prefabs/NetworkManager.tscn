@@ -6,3 +6,4 @@
 [node name="NetworkManager" type="Node"]
 script = ExtResource("1_8hh2l")
 PlayerScene = ExtResource("2_km2en")
+gameScenePath = "res://Prefabs/TestScene.tscn"
