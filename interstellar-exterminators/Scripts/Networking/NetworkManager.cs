@@ -14,9 +14,16 @@ public partial class NetworkManager : Node
     [Export]
     public PackedScene PlayerScene;
 
+    /// <summary>
+    /// Path to the gameplay scene that should be loaded when the match starts.
+    /// </summary>
+    [Export]
+    public string GameScenePath { get; set; } = "res://Scenes/Game.tscn";
 
     private ENetMultiplayerPeer peer;
     private readonly Dictionary<int, Node3D> playersByPeer = new();
+
+    private bool isDedicatedServer = false;
 
     /// <summary>
     /// Initializes multiplayer signal bindings and prepares the manager
@@ -53,6 +60,9 @@ public partial class NetworkManager : Node
         }
 
         Multiplayer.MultiplayerPeer = peer;
+
+        isDedicatedServer = false;
+
         GD.Print($"Host started on port {port}");
     }
 
@@ -63,6 +73,8 @@ public partial class NetworkManager : Node
     public void StartDedicatedServer(int port = 7777, int maxClients = 16)
     {
         GD.Print("Starting dedicated server...");
+
+        isDedicatedServer = true;
 
         peer = new ENetMultiplayerPeer();
         var error = peer.CreateServer(port, maxClients);
@@ -185,13 +197,70 @@ public partial class NetworkManager : Node
     }
 
     /// <summary>
-    /// Performs any initialization required for actually starting the game.
+    /// Called on clients to load the gameplay scene when the server starts the match.
+    /// The server changes its own scene locally and will skip this RPC.
+    /// </summary>
+    [Rpc(MultiplayerApi.RpcMode.Authority)]
+    private void RpcLoadGameScene(string scenePath)
+    {
+        // Only clients should react here; server already changed scene.
+        if (Multiplayer.IsServer())
+            return;
+
+        GD.Print($"NetworkManager (client): Loading game scene '{scenePath}'.");
+
+        var tree = GetTree();
+        if (tree == null)
+        {
+            GD.PushError("NetworkManager: SceneTree is null; cannot change scene on client.");
+            return;
+        }
+
+        var error = tree.ChangeSceneToFile(scenePath);
+        if (error != Error.Ok)
+        {
+            GD.PushError($"NetworkManager (client): Failed to change scene to '{scenePath}': {error}");
+        }
+    }
+
+    /// <summary>
+    /// Performs the full game start sequence on the server.
     /// </summary>
     public void StartGame()
     {
-        foreach (int peerId in Multiplayer.GetPeers())
-            SpawnPlayerForPeer(peerId);
+        if (!Multiplayer.IsServer())
+        {
+            GD.PushError("NetworkManager.StartGame should only be called on the server.");
+            return;
+        }
 
-        SpawnPlayerForPeer(Multiplayer.GetUniqueId());
+        if (string.IsNullOrWhiteSpace(GameScenePath))
+        {
+            GD.PushError("NetworkManager: GameScenePath is not set; cannot start game.");
+            return;
+        }
+
+        GD.Print("NetworkManager: Starting game...");
+
+        Error error = GetTree().ChangeSceneToFile(GameScenePath);
+        if(error != Error.Ok)
+        {
+            GD.PushError($"NetworkManager: Failed to change scene to '{GameScenePath}': {error}");
+            return;
+        }
+        Rpc(nameof(RpcLoadGameScene), GameScenePath);
+
+        foreach (int peerId in Multiplayer.GetPeers())
+        {
+            SpawnPlayerForPeer(peerId);
+        }
+
+        if (!isDedicatedServer)
+        {
+            int localPeerId = Multiplayer.GetUniqueId();
+
+            if (localPeerId != 0 && !playersByPeer.ContainsKey(localPeerId))
+                SpawnPlayerForPeer(localPeerId);
+        }
     }
 }

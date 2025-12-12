@@ -359,17 +359,14 @@ public partial class NetworkLobby : Node
 
         GD.Print("NetworkLobby: Starting game...");
 
-        string gameScenePath = "res://Scenes/Game.tscn";
-
         var networkManager = this.FindInEntireSceneTreeOfType<NetworkManager>();
         if (networkManager == null)
         {
             GD.PushError("NetworkLobby: NetworkManager not found; cannot start game.");
             return;
         }
-        networkManager.StartGame();
 
-        GetTree().ChangeSceneToFile(gameScenePath);
+        networkManager.StartGame();
     }
 
 }
