@@ -32,14 +32,12 @@ public partial class NetworkLobby : Node
 
     public override void _Ready()
     {
-        // Listen to peer events directly; this keeps NetworkManager decoupled.
         Multiplayer.PeerConnected += OnPeerConnected;
         Multiplayer.PeerDisconnected += OnPeerDisconnected;
     }
 
     public override void _Process(double delta)
     {
-        // On the server we need to add the host to the lobby once the multiplayer peer is ready.
         if (!hostAdded && Multiplayer.IsServer() && Multiplayer.MultiplayerPeer != null)
         {
             int hostPeerId = Multiplayer.GetUniqueId();
@@ -361,8 +359,15 @@ public partial class NetworkLobby : Node
 
         GD.Print("NetworkLobby: Starting game...");
 
-        // TODO: Replace with your actual gameplay scene path.
         string gameScenePath = "res://Scenes/Game.tscn";
+
+        var networkManager = this.FindInEntireSceneTreeOfType<NetworkManager>();
+        if (networkManager == null)
+        {
+            GD.PushError("NetworkLobby: NetworkManager not found; cannot start game.");
+            return;
+        }
+        networkManager.StartGame();
 
         GetTree().ChangeSceneToFile(gameScenePath);
     }

@@ -33,13 +33,6 @@ public partial class NetworkManager : Node
         mp.ServerDisconnected += OnServerDisconnected;
 
         GD.Print("NetworkManager ready.");
-
-        //Test code to force an initialization to being a host.
-        if (!Engine.IsEditorHint())
-        {
-            GD.Print("Auto-starting host for test...");
-            StartHost();
-        }
     }
 
     /// <summary>
@@ -61,9 +54,6 @@ public partial class NetworkManager : Node
 
         Multiplayer.MultiplayerPeer = peer;
         GD.Print($"Host started on port {port}");
-
-        // Host process is peer 1 by ENet convention
-        SpawnPlayerForPeer(1);
     }
 
     /// <summary>
@@ -116,8 +106,6 @@ public partial class NetworkManager : Node
 
         if (!Multiplayer.IsServer())
             return;
-
-        SpawnPlayerForPeer((int)id);
     }
 
     /// <summary>
@@ -194,5 +182,16 @@ public partial class NetworkManager : Node
         }
 
         authoritySetup.SetupAuthority(peerId);
+    }
+
+    /// <summary>
+    /// Performs any initialization required for actually starting the game.
+    /// </summary>
+    public void StartGame()
+    {
+        foreach (int peerId in Multiplayer.GetPeers())
+            SpawnPlayerForPeer(peerId);
+
+        SpawnPlayerForPeer(Multiplayer.GetUniqueId());
     }
 }

@@ -9,65 +9,39 @@ using System;
 public partial class NetworkLobbyMenu : Node
 {
     /// <summary>
-    /// NodePath to the VBoxContainer that will hold instantiated PlayerRow controls.
-    /// This container should be the parent of all player list entries in the lobby UI.
-    /// </summary>
-    [Export]
-    public NodePath PlayerRowsContainerPath { get; set; }
-
-    /// <summary>
-    /// NodePath to the Label used to display the local player's role
-    /// (e.g. "You are Host" or "You are Player").
-    /// </summary>
-    [Export]
-    public NodePath RoleLabelPath { get; set; }
-
-    /// <summary>
-    /// NodePath to the "Ready" Button which toggles the local player's ready state.
-    /// </summary>
-    [Export]
-    public NodePath ReadyButtonPath { get; set; }
-
-    /// <summary>
-    /// NodePath to the "Start" Button which allows the host to start the game.
-    /// </summary>
-    [Export]
-    public NodePath StartButtonPath { get; set; }
-
-    /// <summary>
-    /// NodePath to the "Leave" Button which allows the local player to exit the lobby.
-    /// </summary>
-    [Export]
-    public NodePath LeaveButtonPath { get; set; }
-
-    /// <summary>
     /// Reference to the VBoxContainer that contains all PlayerRow instances.
     /// </summary>
+    [Export]
     private VBoxContainer playerRowsContainer;
 
     /// <summary>
     /// Reference to the Label displaying the local player's role text.
     /// </summary>
+    [Export]
     private Label roleLabel;
 
     /// <summary>
     /// Reference to the Button used to toggle the local player's ready state.
     /// </summary>
+    [Export]
     private Button readyButton;
 
     /// <summary>
     /// Reference to the Button used to request starting the game as the host.
     /// </summary>
+    [Export]
     private Button startButton;
 
     /// <summary>
     /// Reference to the Button used to leave and exit the lobby.
     /// </summary>
+    [Export]
     private Button leaveButton;
 
     /// <summary>
     /// PackedScene used to instantiate new PlayerRow controls for the player list.
     /// </summary>
+    [Export]
     private PackedScene playerRowScene;
 
     /// <summary>
@@ -82,12 +56,6 @@ public partial class NetworkLobbyMenu : Node
     /// </summary>
     public override void _Ready()
     {
-        playerRowsContainer = GetNode<VBoxContainer>(PlayerRowsContainerPath);
-        roleLabel = GetNode<Label>(RoleLabelPath);
-        readyButton = GetNode<Button>(ReadyButtonPath);
-        startButton = GetNode<Button>(StartButtonPath);
-        leaveButton = GetNode<Button>(LeaveButtonPath);
-
         playerRowScene = GD.Load<PackedScene>("res://UI/PlayerRow.tscn");
 
         readyButton.Pressed += OnReadyPressed;

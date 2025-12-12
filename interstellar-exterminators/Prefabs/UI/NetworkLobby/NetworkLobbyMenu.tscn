@@ -1,8 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://xbpemadmmbax"]
+[gd_scene load_steps=3 format=3 uid="uid://xbpemadmmbax"]
 
 [ext_resource type="Script" uid="uid://cxddygiw3qlif" path="res://Scripts/UI/NetworkLobby/NetworkLobbyMenu.cs" id="1_khvep"]
+[ext_resource type="PackedScene" uid="uid://nowa2ypvnsgm" path="res://Prefabs/UI/NetworkLobby/PlayerRow.tscn" id="2_mawrb"]
 
-[node name="NetworkLobbyMenu" type="Control"]
+[node name="NetworkLobbyMenu" type="Control" node_paths=PackedStringArray("playerRowsContainer", "roleLabel", "readyButton", "startButton", "leaveButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,11 +11,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_khvep")
-PlayerRowsContainerPath = NodePath("MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox/PlayersScroll/PlayerListVBox")
-RoleLabelPath = NodePath("MarginContainer/NetworkLobby_MainVBox/TopBar/RoleLabel")
-ReadyButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/ReadyButton")
-StartButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/StartButton")
-LeaveButtonPath = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/LeaveButton")
+playerRowsContainer = NodePath("MarginContainer/NetworkLobby_MainVBox/MiddleRow/PlayerPanel/PlayerVBox/PlayersScroll/PlayerListVBox")
+roleLabel = NodePath("MarginContainer/NetworkLobby_MainVBox/TopBar/RoleLabel")
+readyButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/ReadyButton")
+startButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/StartButton")
+leaveButton = NodePath("MarginContainer/NetworkLobby_MainVBox/BottomBar/LeaveButton")
+playerRowScene = ExtResource("2_mawrb")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 0
