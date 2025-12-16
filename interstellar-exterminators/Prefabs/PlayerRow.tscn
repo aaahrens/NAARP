@@ -8,10 +8,13 @@ script = ExtResource("1_bbgr0")
 
 [node name="NameLabel" type="Label" parent="."]
 layout_mode = 2
+text = "Player"
 justification_flags = 160
 
 [node name="ReadyLabel" type="Label" parent="."]
 layout_mode = 2
+text = "Not Ready"
 
 [node name="RoleLabel" type="Label" parent="."]
 layout_mode = 2
+text = "Player"

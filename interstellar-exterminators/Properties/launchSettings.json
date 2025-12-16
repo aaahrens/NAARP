@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Interstellar Exterminators": {
+      "commandName": "Project",
+      "commandLineArgs": "-e --path \"I:\\Godot Projects\\NAARP\\interstellar-exterminators\""
+    },
+    "Interstellar Exterminators Debug": {
+      "commandName": "Executable",
+      "executablePath": "I:\\Programming\\Godot\\Godot_v4.5.1-stable_mono_win64\\Godot_v4.5.1-stable_mono_win64.exe",
+      "commandLineArgs": "--path \"I:\\Godot Projects\\NAARP\\interstellar-exterminators\""
+    }
+  }
+}
