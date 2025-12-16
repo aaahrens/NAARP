@@ -19,8 +19,7 @@ public partial class NetworkAuthority : Node
     /// The peer ID representing the authoritative server.
     /// In ENet-based multiplayer this is conventionally peer ID 1.
     /// </summary>
-    [Export]
-    public int ServerPeerId = 1;
+    public const int ServerPeerId = 1;
 
     /// <summary>
     /// The peer ID of the client that will be granted authority.

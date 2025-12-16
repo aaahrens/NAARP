@@ -50,7 +50,7 @@ public partial class MouseLookServer : Node
             return;
         }
 
-        if (YawTarget != null)
+        if (YawTarget is null)
             YawTarget.RotateY(-yawDelta);
     }
 }

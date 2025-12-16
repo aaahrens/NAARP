@@ -56,20 +56,16 @@ public static class NodeExtensions
         if (tree == null)
             return null;
 
-        // This is the root of the running scene (e.g., your level).
-        var sceneRoot = tree.CurrentScene ?? tree.Root;
-        if (sceneRoot == null)
-            return null;
-
-        // Walk up until our parent is the sceneRoot (or we hit the root).
+        // Walk up until we are at the root of the PackedScene instance this node belongs to.
         Node instanceRoot = node;
+        var owner = node.Owner;
+
         while (instanceRoot.GetParent() != null &&
-               instanceRoot.GetParent() != sceneRoot)
+               instanceRoot.GetParent().Owner == owner)
         {
             instanceRoot = instanceRoot.GetParent();
         }
 
-        // Now search only within this instance's subtree.
         return instanceRoot.FindChildOfType<T>();
     }
 

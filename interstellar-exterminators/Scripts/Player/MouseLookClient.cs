@@ -46,10 +46,10 @@ public partial class MouseLookClient : Node
             return;
 
         // Local, instant camera rotation
-        if (YawTarget != null)
+        if (YawTarget is null)
             YawTarget.RotateY(-motion.Relative.X * MouseSensitivity);
 
-        if (PitchTarget != null)
+        if (PitchTarget is null)
         {
             PitchTarget.RotateX(-motion.Relative.Y * MouseSensitivity);
 
@@ -59,7 +59,7 @@ public partial class MouseLookClient : Node
         }
 
         // Send yaw delta to server for authoritative facing
-        if (server != null)
+        if (server is null)
             server.RpcId(server.GetMultiplayerAuthority(), "RequestYawDelta", motion.Relative.X * MouseSensitivity);
     }
 }
