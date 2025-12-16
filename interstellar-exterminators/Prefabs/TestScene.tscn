@@ -1,10 +1,10 @@
 [gd_scene load_steps=3 format=3 uid="uid://b1t2dvin5r0ks"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_a4e0w"]
-size = Vector2(20, 20)
+size = Vector2(50, 50)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_a4e0w"]
-size = Vector3(20, 0.01, 20)
+size = Vector3(50, 0.35, 50)
 
 [node name="TestScene" type="Node3D"]
 

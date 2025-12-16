@@ -200,6 +200,7 @@ public partial class NetworkManager : Node
         }
 
         var player = PlayerScene.Instantiate<Node3D>();
+
         if (player == null)
         {
             GD.PushError("NetworkManager: Failed to instantiate PlayerScene.");
@@ -208,6 +209,9 @@ public partial class NetworkManager : Node
 
         currentScene.AddChild(player);
 
+        //TODO: This will need to be replaced with a proper way of deciding where to spawn players.
+        RandomNumberGenerator randomNumberGenerator = new RandomNumberGenerator();
+        player.GlobalPosition = Vector3.Up + Vector3.Right * randomNumberGenerator.RandiRange(-10,10) + Vector3.Forward * randomNumberGenerator.RandiRange(-10,10);
 
         playersByPeer[peerId] = player;
 
